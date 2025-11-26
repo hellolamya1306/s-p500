@@ -2,7 +2,7 @@ import numpy as np
 import networkx as nx
 
 def correlation_to_graph(corr_matrix, threshold=0.5):
-    """Convert correlation matrix to weighted graph."""
+    """Convert correlation matrix to a weighted graph."""
     G = nx.Graph()
     n = len(corr_matrix)
     for i in range(n):
