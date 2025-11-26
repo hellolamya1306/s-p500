@@ -6,7 +6,7 @@ from qiskit.primitives import Sampler
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
 def solve_maxcut_qiskit(G):
-    """Solve Max-Cut problem using QAOA (Qiskit)."""
+    """Solve max-cut problem using QAOA (Qiskit)."""
     w = nx.adjacency_matrix(G).toarray()
     qubit_op, offset = max_cut.get_operator(w)
     
