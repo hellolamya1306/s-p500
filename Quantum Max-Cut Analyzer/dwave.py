@@ -2,7 +2,7 @@ import dwave_networkx as dnx
 import dimod
 
 def solve_maxcut_dwave(G):
-    """Solve Max-Cut using D-Wave simulated annealing."""
+    """Solve max-cut using D-Wave simulated annealing."""
     Q = {}
     for i, j in G.edges():
         Q[(i, j)] = G[i][j]['weight']
