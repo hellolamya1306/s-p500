@@ -1,13 +1,19 @@
 # s&p500
 Selected 7 largest stocks per sector and calculated a range average weighted metrics for each stock. 
+
 Created 4 agents (growth, Michael Burry, Damodaran, and Buffett). Each agent compares each metric to a threshold and gives a score. Depending on the score, the stock is labelled as bullish, bearish or neutral. Each agent outputs top 5 stocks per sector (i.e. each agent gives 55 stocks to trade). These 55 stocks we store them to a variable each for backtesting each agent. Then a consensus agent counts the number of bullish signals per stocks and gives long signal for stocks with more than 2 bullish signal, short for less than 2 and neutral for exactly 2. These 5 agents become the 5 strategies we backtest and then take the best strategy for forward testing.
+
 Threshold for the metrics scoring: for some metrics like roe, fcf yiled, net margin it is above 75th percentile, and for some like debt-equity ration, pe, pb, ps it is less than 25th percentile. 
+
 Why I added weights to each quarter (lesser for the older quarters, more weights for the latest questers): The older quarters should not have too much influence on the decision to select the stocks. Idea influenced by EMA. Method: quarter number / (n(n+1)/2)
+
 How to decide whether to select 9 quarters or lesser: Question 1 is: Is using more data (as in, more quarters) smoothing out the noise from the 9 quarters or is it creating stronger data/signal? Way to find out: take one stock and create 6 versions of it: 9 quarter average weighted metrics, 8 quarters average weighted metrics, 7 quarters average weighted metrics, 6 quarters average weighted metrics, 5 quarters average weighted metrics, 4 quarters average weighted metrics. Pass this dataframe through the 4 models, if all 6 are mostly passed by each model with the same signal (Bullish, Bearish, Neutral), it means the number of quarters have no influence. But if some come out Bullish and some another signal, it means number of quarters added do influence. The signals did vary for the 6 versions of the stock. Question 2 is: if number of quarters does matter, then how many quarters to take in? I decided to check the sharpe and sortino ratios of the portfolio (largest 7 from each sector) across a number of quarters (4Q, 5Q, 6Q, 7Q, 8Q, 9Q) to see which quarter gives best risk-adjusted return and take that chose that n quarters. This method showed that 6 quarters is the best. 
+
 Backtesting: Using backtesting.py. We start with 100k in cash. We download 10-year price data (as we backtest for 10 years – 2010 to end of 2024) for each of the 55 stocks per agent, and create a class for each of the 5 strategies (since this is required for backtesting.py). We take decision to buy if the stock has a bullish signal (1) (this is a one time decision) and also if the price of the stock on that day is greater than the stocks’ 100-day moving average (this is to add a dynamic condition so that the trading signals keep changing). This is done for each agent to see which agent performs best and we got the growth agent performing best during the backtest with final value= 148350.07 (started with 100k), total return in %: 48.35, and total trades= 1126. 
 Forward testing/evaluation period: We then forward test the growth agent/strategy again from 2025 April to 2026 February 20th. It performs well again in this short period: Final Value: 105692.03 (we start again with 100k in cash during the forward testing period), Total Return in % = 5.69, Total Trades= 77. 
 
 HMM: hidden markov model (regime switching model): Usinf python’s hmm package. Downloaded OHLCV of the 77 stocks, calculated numerous technical indicators using ta-lib package and added those as columns to the df, used dickey fuller test (adfuller package – if p_value>0.05 it is non-stationary) to check which indicators are stationary and make the non-stationary indicators into stationary using .pct_change(). Lagged the returns of the stocks by 1 days (.shift(-1), these are future returns, and if future returns are > 0, target variable (‘y_signal’ – we create this new column in the df) is 1 (upward price movement) and y_signal is 0 if future returns is less than 0 (downward price movement).
+
 Split data into trainig and testing, hmm model will signal each day within window size to be bullish or bearish. Train 2 Random Forest Classifiers (RFC model0 on data from hmm model signalling bullish and the other RFC model1 on data from hmm model signalling bearish). Concurrently both models will give probability of tomorrow’s price movement (y_signal) being 1. We interpret it this way: suppose RFC model0 gives 0.60 probability of tomorrow’s y_signal being 1 and RFC model1 gives 0.40 probability. If regime is bullish, there will be 60% change of upward price movement, and if regime is bearish, there will be 40% chance of upward price movement. So if hmm model predicts next day to be bullish, we go with model0’s 60% probability and we convert that probability to the long/short/neutral signal (if probability>0.53 the signal is 1/long, if probability<0.47 the signal is -1/short, else signal is 0/neutral). 
 
 GARCH: Finally, we create a GARCH model, using arch_model package, to check volatility of the same stocks during the same time period. Main parameters to look at are omega, alpha and beta. Larger alpha means any news shock has a larger immediate impact and larger beta means the impact stays for a longer time. 
@@ -18,9 +24,3 @@ NEXT STEPS/IMPLEMENTATIONS (I want to use this project to learn the following):
 -	RL for trading strategy optimization
 -	Sentimental trading using VADER
 -	NLP in trading
-
-
-
-
-
-
